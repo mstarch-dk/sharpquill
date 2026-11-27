@@ -1,0 +1,137 @@
+# Reference Caddyfile for the bundled Caddy service (docker compose --profile caddy up -d).
+#   cp Caddyfile.example Caddyfile    # then adjust; hostnames come from the DOMAIN / ADMIN_DOMAIN /
+#                                      # ANALYTICS_DOMAIN / ADMIN_ALLOWED_IPS variables in .env
+#
+# Upstreams use the compose service names. If you run Caddy on the host instead, replace them with
+# 127.0.0.1:<port> (API 5000, web 3000, admin 3001, umami 3002 by default).
+
+{
+	# Optional: contact address for Let's Encrypt expiry notices
+	# email you@example.com
+	# Local testing only: issue certificates from Caddy's own CA instead of Let's Encrypt
+	# local_certs
+}
+
+# ─── Snippets (see docs/security-headers.md) ────────────────────────────────
+
+(security_headers) {
+	header {
+		# Only once every subdomain serves HTTPS. Add `preload` deliberately, it is hard to undo.
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+}
+
+(admin_headers) {
+	import security_headers
+	header {
+		X-Frame-Options "DENY"
+		# Starting point for the Nuxt admin app (SSR emits inline scripts/styles). Roll out with
+		# Content-Security-Policy-Report-Only first, then tighten from the browser console reports.
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+	}
+}
+
+# Optional: only these client IPs may reach the admin and analytics hosts.
+# Import it with `import allowlist` inside a route block. ADMIN_ALLOWED_IPS defaults to everyone.
+(allowlist) {
+	@blocked not remote_ip {$ADMIN_ALLOWED_IPS}
+	respond @blocked 403
+}
+
+# ─── Public site ────────────────────────────────────────────────────────────
+
+{$DOMAIN} {
+	import security_headers
+	encode gzip zstd
+
+	# Only the Umami tracker is public; the dashboard lives on the analytics host
+	handle /umami/script.js {
+		uri strip_prefix /umami
+		reverse_proxy umami:3000
+	}
+	handle /umami/api/send {
+		uri strip_prefix /umami
+		reverse_proxy umami:3000
+	}
+	handle /umami/* {
+		respond 404
+	}
+
+	# The admin API is never served on the public hostname
+	handle /api/admin/* {
+		respond 404
+	}
+
+	# X-Client-Cert-Fingerprint is only trustworthy when set from a verified client certificate:
+	# strip anything a visitor sends.
+	handle /uploads/* {
+		reverse_proxy api:5000 {
+			header_up -X-Client-Cert-Fingerprint
+		}
+	}
+	handle /api/* {
+		reverse_proxy api:5000 {
+			header_up -X-Client-Cert-Fingerprint
+		}
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}
+
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}
+
+# ─── Admin ──────────────────────────────────────────────────────────────────
+
+{$ADMIN_DOMAIN} {
+	import admin_headers
+
+	# Optional mTLS: uncomment, put the CA certificate that signed your admin client certificates in
+	# ./certs/ca.crt, and use `mode require` once every admin has a certificate. With `mode request` a
+	# certificate is optional and password login keeps working; certificate login needs one.
+	# tls {
+	# 	client_auth {
+	# 		mode request
+	# 		trust_pool file {
+	# 			pem_file /etc/caddy/certs/ca.crt
+	# 		}
+	# 	}
+	# }
+
+	route {
+		# Optional IP allowlist: uncomment to restrict the admin host
+		# import allowlist
+
+		handle /uploads/* {
+			reverse_proxy api:5000 {
+				header_up -X-Client-Cert-Fingerprint
+			}
+		}
+		handle /api/* {
+			# Forward the verified client certificate fingerprint (empty without mTLS)
+			reverse_proxy api:5000 {
+				header_up X-Client-Cert-Fingerprint {http.request.tls.client.fingerprint}
+			}
+		}
+		handle {
+			reverse_proxy admin:3000
+		}
+	}
+}
+
+# ─── Analytics dashboard (optional) ─────────────────────────────────────────
+
+{$ANALYTICS_DOMAIN} {
+	import security_headers
+	route {
+		# import allowlist
+		reverse_proxy umami:3000
+	}
+}

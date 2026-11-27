@@ -1,0 +1,63 @@
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+
+WORKDIR /src
+
+# Copy project files first for layer caching
+COPY src/backend/*.sln ./
+COPY src/backend/api/*.csproj ./api/
+COPY src/backend/core/*.csproj ./core/
+COPY src/backend/application/*.csproj ./application/
+COPY src/backend/migrations/*.csproj ./migrations/
+COPY src/backend/api.Tests/*.csproj ./api.Tests/
+COPY src/backend/db-init/*.csproj ./db-init/
+
+# Restore dependencies
+RUN dotnet restore
+
+# Copy source code
+COPY src/backend/ ./
+
+# Build and publish
+WORKDIR /src/api
+RUN dotnet publish -c Release -o /app/publish
+
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+
+WORKDIR /app
+
+# Kerberos libraries required by Npgsql, fontconfig required by SkiaSharp (image resizing), curl for the healthcheck
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libkrb5-3 libfontconfig1 curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd --system --gid 1001 appgroup && \
+    useradd --system --uid 1001 --gid appgroup appuser
+
+# Copy published application
+COPY --from=build /app/publish .
+
+# Create uploads directory
+RUN mkdir -p /app/uploads
+
+# Set ownership
+RUN chown -R appuser:appgroup /app
+
+USER appuser
+
+# Expose port
+EXPOSE 5000
+
+# Set environment variables
+ENV ASPNETCORE_URLS=http://+:5000
+ENV DOTNET_RUNNING_IN_CONTAINER=true
+# Writable cache dir for fontconfig (SkiaSharp) as the non-root user
+ENV XDG_CACHE_HOME=/tmp/.cache
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=3 \
+  CMD curl -fsS http://localhost:5000/health || exit 1
+
+# Start the application
+ENTRYPOINT ["dotnet", "SharpQuill.Api.dll"]

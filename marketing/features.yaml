@@ -1,0 +1,90 @@
+# What the marketing material covers, one entry per feature (the /marketing skill diffs this against the app).
+#
+# id        stable key, used by shots.yaml (`feature:`) and edition.json
+# title     the feature's name in the brochure
+# section   the id="…" of the block in site/index.html that describes it
+# web       public-site routes (src/frontend/web/app/pages); admin: admin routes (src/frontend/admin/app/pages)
+# api       API controllers it depends on (src/backend/api/Controllers)
+# shots     images in shots.yaml that show it (check: each exists and is used once in index.html)
+# since     the PR or commit that added or last changed it in a way the text must reflect
+
+features:
+  - id: writing
+    title: Writing and publishing
+    section: writing
+    web: [/blog/:slug, /:slug]
+    admin: [/articles, /articles/:id/edit, /articles/:id/preview, /pages/:id/edit]
+    api: [Admin/ArticlesController, Admin/PagesController]
+    shots: [admin_editor, admin_versions, web_article, web_markdown]
+
+  - id: layouts
+    title: Block layouts
+    section: layouts
+    admin: [/articles/:id/edit]
+    api: [Admin/ArticlesController, Admin/LinkPreviewController, Admin/TweetPreviewController]
+    shots: [admin_layout, web_layout]
+
+  - id: organising
+    title: Categories, tags, pages and menus
+    section: organising
+    web: [/category/:slug, /tag/:slug, /:slug]
+    admin: [/articles, /categories, /tags, /pages, /navigation, /navigation/:id/edit]
+    api: [Admin/CategoriesController, Admin/TagsController, Admin/NavigationsController]
+    shots: [admin_articles, admin_navigation, web_category]
+
+  - id: series
+    title: Series
+    section: series
+    web: [/series, /series/:slug]
+    admin: [/series, /series/:id/edit]
+    api: [Admin/SeriesController, V1/SeriesController]
+    shots: [admin_series, web_series, web_series_nav]
+
+  - id: public_site
+    title: The public website
+    section: public-site
+    web: [/, /blog]
+    shots: [web_home, web_mobile_home, web_mobile_article]
+
+  - id: finding
+    title: Site search and feeds
+    section: finding
+    web: [/search, /rss.xml, /atom.xml]
+    api: [V1/SearchController]
+    shots: [web_search_suggest, web_search]
+    since: "#77, #80, #88"
+
+  - id: readers
+    title: Readers, comments and members
+    section: readers
+    web: [/login, /signup]
+    admin: [/comments, /website-users]
+    api: [V1/CommentsController, V1/LikesController, V1/WebsiteAuthController, V1/ContactController, Admin/CommentsController, Admin/WebsiteUsersController]
+    shots: [web_comments, web_members, admin_comments, admin_readers]
+
+  - id: look
+    title: Look and feel from settings
+    section: look
+    admin: [/settings]
+    api: [Admin/SettingsController]
+    shots: [admin_settings, web_dark]
+
+  - id: media
+    title: Images
+    section: media
+    admin: [/articles/:id/edit, /media]
+    api: [Admin/MediaController]
+    shots: [admin_media, admin_media_library]
+    since: "#90"
+
+  - id: portability
+    title: Export and import
+    section: portability
+    admin: [/packages]
+    api: [Admin/ExportController, Admin/ImportController]
+    shots: [admin_packages]
+
+  - id: selfhost
+    title: Running it yourself
+    section: self-hosting
+    shots: []

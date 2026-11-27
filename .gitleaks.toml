@@ -1,0 +1,11 @@
+title = "cms gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known findings reviewed and explicitly approved by the repository owner"
+# Dummy HS256 secret used by a unit test, not a real credential
+paths = ['''src/backend/api\.Tests/Services/JwtSecretValidationTests\.cs''']
+# Dev-only JWT committed in .claude/settings.local.json in Feb 2026; the file has been untracked since October 2026
+commits = ["32b239613cffdf8f2d2f08e698db17633278f9fb"]

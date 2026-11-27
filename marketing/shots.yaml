@@ -1,0 +1,173 @@
+# Every screenshot in marketing/site/img/ (npm run marketing -- shots [ID…], against the demo stack).
+#
+# id        file name (img/<id>.png), referenced once from site/index.html
+# feature   the features.yaml entry it illustrates
+# app       web (public site) | admin (admin panel; the tool logs in with the demo admin first)
+# path      app path; {article:SLUG} {page:SLUG} {series:SLUG} {nav:SLUG} become the demo's ids
+# viewport  desktop (1440×900, scale 1.5, default) | mobile (390×844, scale 2); scheme: light (default) | dark
+# wait_for  a selector that must be visible first; settle: extra ms after loading (default 1200)
+# actions   before the shot: {css, has_text (regex), nth, do: click|hover|fill|scroll, text, offset, settle},
+#           {wait: ms} or {goto: path}. `scroll` puts the element `offset` px (default 80) below the top.
+# clip      an element {css, has_text, nth}; `to:` a second element, the shot covers both and what's between
+#           (`edge: top` stops where `to` starts); `span:` an element whose left/right edges set the width;
+#           pad (px, default 12); full_width; max_height. Without clip: the viewport (full_page: true for all).
+# also      an extra copy of the image, relative to the repo root (the README screenshots)
+#
+# Locate by page structure, headings and labels, never by pixel coordinates, so a layout change moves the frame
+# with it. A locator that matches nothing fails the shot instead of saving a wrong picture.
+
+shots:
+  # ---------- public website ----------
+  - id: web_home
+    feature: public_site
+    app: web
+    path: /
+
+  - id: web_article
+    feature: writing
+    app: web
+    path: /blog/planlaeg-haven-paa-papir
+    also: docs/images/web-article.png
+
+  - id: web_markdown
+    feature: writing
+    app: web
+    path: /blog/planlaeg-haven-paa-papir
+    clip: {css: "article h2", has_text: "^Ét ark", to: {css: "article p", has_text: "^Næste indlæg"}, span: {css: "article h1"}}
+
+  - id: web_layout
+    feature: layouts
+    app: web
+    path: /blog/hvad-goer-man-med-alle-de-tomater
+    clip: {css: "article section", has_text: "^Rist og frys", to: {css: "article section", has_text: "^Vil du have"}}
+
+  - id: web_series
+    feature: series
+    app: web
+    path: /series/fra-froe-til-middag
+
+  - id: web_series_nav
+    feature: series
+    app: web
+    path: /blog/hvad-goer-man-med-alle-de-tomater
+    clip: {css: "article h1", to: {css: "article div", has_text: "^\\s*Del 4 af 4"}}
+
+  - id: web_comments
+    feature: readers
+    app: web
+    path: /blog/hvad-goer-man-med-alle-de-tomater
+    clip: {css: "article div", has_text: "^\\s*Tags:", to: {css: button, has_text: "^\\s*Tilføj kommentar"}, span: {css: "article h1"}}
+
+  - id: web_members
+    feature: readers
+    app: web
+    path: /blog/vinterforraadet
+    clip: {css: "div.rounded-lg:has(h2:text-is('Kræver login'))", pad: 40}
+
+  - id: web_dark
+    feature: look
+    app: web
+    path: /blog/hvad-goer-man-med-alle-de-tomater
+    actions:
+      - {css: "button[aria-label='Skift til mørkt tema']", do: click, settle: 800}
+
+  - id: web_category
+    feature: organising
+    app: web
+    path: /category/opbevaring
+
+  - id: web_mobile_home
+    feature: public_site
+    app: web
+    path: /
+    viewport: mobile
+
+  - id: web_mobile_article
+    feature: public_site
+    app: web
+    path: /blog/hvad-goer-man-med-alle-de-tomater
+    viewport: mobile
+
+  - id: web_search_suggest
+    feature: finding
+    app: web
+    path: /
+    actions:
+      - {css: "header input[type=search]", do: fill, text: "tom", settle: 1500}
+    clip: {css: header, to: {css: "header [role=listbox]"}}
+
+  - id: web_search
+    feature: finding
+    app: web
+    path: /search?q=tomater
+
+  # ---------- admin panel ----------
+  - id: admin_articles
+    feature: organising
+    app: admin
+    path: /articles
+
+  - id: admin_editor
+    feature: writing
+    app: admin
+    path: /articles/{article:planlaeg-haven-paa-papir}/edit
+    also: docs/images/admin-editor.png
+
+  - id: admin_layout
+    feature: layouts
+    app: admin
+    path: /articles/{article:hvad-goer-man-med-alle-de-tomater}/edit
+    actions:
+      - {css: label, has_text: "^Layout Sections", do: scroll, offset: 70}
+
+  - id: admin_versions
+    feature: writing
+    app: admin
+    path: /articles/{article:planlaeg-haven-paa-papir}/edit
+    actions:
+      - {css: button, has_text: "^\\s*Versions", do: click, settle: 1000}
+
+  - id: admin_series
+    feature: series
+    app: admin
+    path: /series/{series:fra-froe-til-middag}/edit
+    actions:
+      - {css: h3, has_text: "^Articles in Series$", do: scroll, offset: 420}
+
+  - id: admin_navigation
+    feature: organising
+    app: admin
+    path: /navigation/{nav:main-menu}/edit
+
+  - id: admin_comments
+    feature: readers
+    app: admin
+    path: /comments
+
+  - id: admin_readers
+    feature: readers
+    app: admin
+    path: /website-users
+
+  - id: admin_settings
+    feature: look
+    app: admin
+    path: /settings
+    clip: {css: "div.bg-white", has_text: "^\\s*Typography", to: {css: "div.bg-white", has_text: "^\\s*Theme"}}
+
+  - id: admin_media
+    feature: media
+    app: admin
+    path: /articles/{article:hvad-goer-man-med-alle-de-tomater}/edit
+    actions:
+      - {css: button, has_text: "Choose Image|Change Image", do: click, settle: 1200}
+
+  - id: admin_media_library
+    feature: media
+    app: admin
+    path: /media
+
+  - id: admin_packages
+    feature: portability
+    app: admin
+    path: /packages

@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "type": "module",
+  "description": "Not an installable package: marks the layer's config files as ES modules. Dependencies are the consuming apps' (see paths.ts)."
+}

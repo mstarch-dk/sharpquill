@@ -1,0 +1,10 @@
+{
+  // Type-checks the Vitest unit tests and config as part of `npm run typecheck` (referenced from ../tsconfig.json).
+  // test/nuxt/** is not listed: Nuxt's generated tsconfig.app.json already includes it, with the auto-import types.
+  "extends": "../.nuxt/tsconfig.app.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "tsBuildInfoFile": "../.nuxt/tsconfig.test.tsbuildinfo"
+  },
+  "include": ["./unit/**/*.ts", "../../layers/shared/test/unit/**/*.ts", "../vitest.config.ts"]
+}

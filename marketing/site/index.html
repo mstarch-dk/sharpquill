@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sharpquill</title>
+<meta name="description" content="Sharpquill, a self-hosted CMS and blog: write in an admin panel, publish to a fast server-rendered site, run it on one small VM.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400..700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* One reading column (~66ch) that widens to a 1120px stage for screenshots. Colours are the Sharpquill Ink teal palette (assets/brand/README.md). */
+:root {
+  --bg: #f4f7f6;
+  --surface: #ffffff;
+  --ink: #102324;
+  --muted: #55676a;
+  --line: #d6e0de;
+  --brand: #0F3D3E;
+  --accent: #1F7A72;
+  --accent-soft: #e1efec;
+  --warn: #9a5b00;
+  --warn-soft: #f8eedb;
+  --shot-shadow: 0 1px 2px rgba(10,35,36,.06), 0 10px 30px rgba(10,35,36,.09);
+  --f-display: "Fraunces", Georgia, serif;
+  --f-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0A2324; --surface: #0f2e2f; --ink: #e6efed; --muted: #93a8a5; --line: #1f4041;
+    --brand: #ffffff; --accent: #7CC4B8; --accent-soft: #133a3a; --warn: #e3ac55; --warn-soft: #2e2413;
+    --shot-shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0A2324; --surface: #0f2e2f; --ink: #e6efed; --muted: #93a8a5; --line: #1f4041;
+  --brand: #ffffff; --accent: #7CC4B8; --accent-soft: #133a3a; --warn: #e3ac55; --warn-soft: #2e2413;
+  --shot-shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1.0625rem/1.65 var(--f-body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px 64px; }
+.col { max-width: 66ch; }
+h1, h2, h3 { font-family: var(--f-display); line-height: 1.12; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2.5rem, 7vw, 4.4rem); font-weight: 700; letter-spacing: -.02em; }
+h2 { font-size: clamp(1.7rem, 3.6vw, 2.4rem); font-weight: 700; letter-spacing: -.01em; }
+h3 { font-size: 1.2rem; font-weight: 500; }
+p { margin: 0; }
+a { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+code, .mono { font-family: var(--f-mono); font-size: .88em; }
+code { background: var(--accent-soft); padding: .08em .35em; border-radius: 4px; }
+.eyebrow { font: 500 .75rem/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.muted { color: var(--muted); }
+.stack > * + * { margin-top: 1rem; }
+ul.plain { margin: 0; padding-left: 1.2em; }
+ul.plain li + li { margin-top: .35rem; }
+em.ui { font-style: italic; color: var(--ink); }
+
+/* hero */
+.logo { display: block; height: 64px; width: auto; margin-left: -6px; }
+.logo .mark { fill: var(--brand); }
+.logo .cut { fill: var(--bg); }
+.logo .word { fill: var(--ink); font: 650 92px var(--f-body); letter-spacing: -4px; }
+header.hero { padding: 72px 0 40px; border-bottom: 1px solid var(--line); }
+.hero .lede { font-size: clamp(1.15rem, 2.2vw, 1.4rem); line-height: 1.5; margin-top: 20px; max-width: 46ch; }
+.hero .facts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; padding: 0; list-style: none; }
+.hero .facts li { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: .9rem; }
+.hero figure { margin: 40px 0 0; }
+
+/* sections */
+section.block { padding: 64px 0 8px; }
+section.block > .head { display: flex; gap: 16px; align-items: baseline; margin-bottom: 20px; }
+section.block > .head .num { font: 500 .85rem/1 var(--f-mono); color: var(--accent); min-width: 2.2em; }
+.two { display: grid; gap: 32px; grid-template-columns: minmax(0, 1fr); margin-top: 28px; }
+@media (min-width: 900px) { .two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+.pair { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); margin-top: 28px; }
+@media (min-width: 700px) { .pair { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.phones { display: grid; gap: 24px; grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 640px; margin: 28px auto 0; }
+
+figure.shot { margin: 28px 0 0; }
+figure.shot img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); box-shadow: var(--shot-shadow); background: var(--surface); }
+figure.shot figcaption { margin-top: 10px; font-size: .92rem; color: var(--muted); max-width: 72ch; }
+figure.shot figcaption b { color: var(--ink); font-weight: 600; }
+figure.shot.narrow { max-width: 760px; margin-left: auto; margin-right: auto; }
+.two figure.shot, .pair figure.shot, .phones figure.shot { margin-top: 0; }
+
+.note { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: .95rem; }
+.note.warn { border-color: var(--warn); background: var(--warn-soft); }
+
+/* feature grid */
+.grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); margin-top: 24px; }
+.cell { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.cell h3 { font-family: var(--f-body); font-size: .98rem; font-weight: 600; margin-bottom: 4px; }
+.cell p { font-size: .9rem; color: var(--muted); line-height: 1.5; }
+
+/* audiences */
+.aud { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); margin-top: 24px; }
+@media (min-width: 760px) { .aud { grid-template-columns: 1fr 1fr; } }
+.aud .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+.aud .card h3 { margin-bottom: 8px; }
+
+/* architecture diagram */
+.arch { margin-top: 28px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.arch svg { display: block; width: 100%; height: auto; }
+.arch .box { fill: var(--bg); stroke: var(--line); }
+.arch .box.hi { fill: var(--accent-soft); stroke: var(--accent); }
+.arch text { fill: var(--ink); font: 500 13px var(--f-body); }
+.arch text.sub { fill: var(--muted); font: 400 11px var(--f-body); }
+.arch .wire { stroke: var(--muted); stroke-width: 1.3; fill: none; marker-end: url(#arrow); }
+.arch .host { fill: none; stroke: var(--muted); stroke-dasharray: 4 4; }
+.arch #arrow path { fill: var(--muted); }
+
+table.limits { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: .95rem; }
+table.limits th, table.limits td { text-align: left; vertical-align: top; padding: 10px 12px; border-top: 1px solid var(--line); }
+table.limits th { width: 32%; font-weight: 600; }
+.scroll-x { overflow-x: auto; }
+
+pre { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font: 400 .88rem/1.55 var(--f-mono); }
+footer.foot { margin-top: 72px; padding-top: 24px; border-top: 1px solid var(--line); font-size: .9rem; color: var(--muted); }
+
+@media print {
+  body { background: #fff; }
+  header.hero { padding-top: 24px; }
+  section.block { break-before: page; padding-top: 0; }
+  section.block.nobreak { break-before: auto; padding-top: 40px; }
+  figure.shot, .cell, .aud .card, .arch, table.limits tr, pre { break-inside: avoid; }
+  figure.shot img { box-shadow: none; }
+  a { color: inherit; text-decoration: none; }
+  .logo .cut { fill: #fff; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero" id="top">
+  <svg class="logo" viewBox="0 0 760 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sharpquill">
+    <g transform="translate(0 4) scale(.94)">
+      <path class="mark" d="M78 180C91 139 111 98 145 63C168 39 198 22 226 14C217 34 208 55 197 75C183 101 164 121 139 135C119 147 98 161 78 180Z"/>
+      <path class="cut" d="M92 165C116 127 151 91 198 51C165 90 132 127 92 165Z"/>
+      <path class="mark" d="M139 135C151 113 174 96 205 88C194 107 177 123 157 135C150 139 144 139 139 135Z"/>
+      <path class="mark" d="M76 182C107 164 145 154 181 159C151 160 116 170 76 182Z"/>
+      <path class="mark" d="M76 182L63 196L78 180Z"/>
+    </g>
+    <text class="word" x="250" y="145">Sharpquill</text>
+  </svg>
+  <p class="eyebrow" style="margin-top:18px">Self-hosted CMS and blog · open source (MIT)</p>
+  <h1 style="margin-top:14px">Write it. Publish it.<br>Keep it.</h1>
+  <p class="lede">A content management system for people who want to own their website: write articles and pages in an
+    admin panel, publish them to a fast server-rendered public site, and run the whole thing with Docker Compose on
+    one small server.</p>
+  <ul class="facts">
+    <li>Markdown editor with block layouts</li>
+    <li>Series, categories, tags, menus</li>
+    <li>Comments, likes, members-only posts</li>
+    <li>Site search, RSS and Atom feeds</li>
+    <li>Themes and fonts from settings</li>
+    <li>Export and import</li>
+    <li>One VM, Docker Compose</li>
+  </ul>
+  <figure class="shot">
+    <img src="img/web_home.png" alt="The public website's front page with the latest articles as cards" width="2160" height="1350">
+    <figcaption><b>The public site.</b> The front page of the demo site used throughout this brochure: the menu,
+      the latest articles with their category, date, author and tags. Everything you see is configured in the
+      admin panel; no code was changed to make it.</figcaption>
+  </figure>
+</header>
+
+<section class="block" id="about">
+  <div class="head"><span class="num">00</span><h2>What it is, and who it is for</h2></div>
+  <div class="col stack">
+    <p>Sharpquill is two web applications on one API: a <strong>public website</strong>, rendered on the server so pages
+      arrive complete and are easy for search engines to read, and an <strong>admin panel</strong> where writers and
+      editors create, organise and publish content. Articles are stored as Markdown in PostgreSQL; images live on
+      disk next to the API.</p>
+    <p>It is deliberately small. One site per installation, a handful of containers, no plugin marketplace and no
+      monthly bill beyond the server it runs on.</p>
+  </div>
+  <div class="aud">
+    <div class="card">
+      <h3>If you write</h3>
+      <p>You get an editor that feels like a word processor but saves clean Markdown, a layout mode for richer pages,
+        series for multi-part stories, previews and a version history, and a reader side with comments, likes and
+        members-only posts. You change the site's name, theme and fonts in a settings page.</p>
+    </div>
+    <div class="card">
+      <h3>If you run the server</h3>
+      <p>You get four published container images, a reference Compose file and Caddy config, separate hostnames for
+        the public site and the admin, short-lived tokens with rotating refresh tokens, optional client-certificate
+        login for the admin, backup and restore scripts, and plain SQL you can read. Section 09 covers it.</p>
+    </div>
+  </div>
+  <p class="note" style="margin-top:24px">About the screenshots: they come from a demo installation filled with a
+    fictional Danish gardening blog, <em>Nyttehaven</em>, with the site language set to Danish, so the public
+    site's own texts (buttons, headings such as <em>Seneste artikler</em>, “latest articles”) are Danish too. Set
+    the language to English and they switch. The admin panel is in English.</p>
+</section>
+
+<section class="block" id="writing">
+  <div class="head"><span class="num">01</span><h2>Writing and publishing</h2></div>
+  <div class="col stack">
+    <p>Articles and pages are written in the same editor. By default it is a rich-text editor with a toolbar
+      (headings, bold, italic, lists, quotes, code, links, images); what it saves is Markdown, so content stays
+      portable and readable outside the CMS. Switch on <em class="ui">Simple Editor</em> to edit the Markdown
+      directly.</p>
+    <p>Around the text sit the things a published post needs: a slug, an excerpt for cards and search results, a
+      meta title and description, a featured image with a display size (<em class="ui">extra small</em>,
+      <em class="ui">small</em>, <em class="ui">medium</em> or <em class="ui">original</em>) and a header style (plain, image with the title
+      overlaid, blurred image, or a gradient header), a category and tags, a publish date, the author name shown to
+      readers, and switches for comments and for <a href="#readers">members-only</a> access.</p>
+    <p><strong>Scheduling</strong> needs no extra step: publish an article with a date in the future and the public
+      site treats it as a draft until that moment, then shows it in lists, feeds and search on its own.</p>
+  </div>
+  <figure class="shot">
+    <img src="img/admin_editor.png" alt="The admin article editor with title, slug and formatted content" width="2160" height="1350" loading="lazy">
+    <figcaption><b>The editor.</b> Title, slug (generated from the title unless you untick
+      <em class="ui">Auto-generate</em>) and the content with its toolbar. Tables, quotes and numbered lists written
+      here render on the public site exactly as Markdown does.</figcaption>
+  </figure>
+  <div class="two">
+    <figure class="shot">
+      <img src="img/admin_versions.png" alt="The Versions tab listing three versions of an article" width="2160" height="1350" loading="lazy">
+      <figcaption><b>Versions.</b> Every save that changes the content creates a new version. The published one is
+        marked; any earlier version can be viewed and published again, which is also how you undo a bad edit.</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="img/web_article.png" alt="The published article on the public site" width="2160" height="1350" loading="lazy">
+      <figcaption><b>The published article.</b> Category, date, title, excerpt, author and the featured image,
+        with the series box (<a href="#series">section 04</a>) above the text. A <em class="ui">Preview</em> button
+        in the editor shows the same page before it goes live.</figcaption>
+    </figure>
+  </div>
+  <figure class="shot narrow">
+    <img src="img/web_markdown.png" alt="Rendered Markdown: headings, a numbered list, a quote and a table" width="1350" height="1350" loading="lazy">
+    <figcaption><b>Markdown as readers see it.</b> Headings, a numbered list with bold lead-ins, a quote and a table
+      from one article. The HTML is sanitised on the server before it is sent to the browser.</figcaption>
+  </figure>
+</section>
+
+<section class="block" id="layouts">
+  <div class="head"><span class="num">02</span><h2>Block layouts for richer pages</h2></div>
+  <div class="col stack">
+    <p>Plain text is enough for most posts. When a page needs more structure, turn on layout mode and build it from
+      <strong>sections</strong> (full width, two columns or three columns) that hold <strong>blocks</strong>:</p>
+    <ul class="plain">
+      <li><strong>Text</strong> in the same editor as above, and <strong>images</strong> with alt text and caption.</li>
+      <li><strong>Steps</strong> (numbered cards), <strong>cards</strong> (an icon picked from 56
+        outline icons or an emoji, a title and a description) and a
+        <strong>call to action</strong> with a button.</li>
+      <li><strong>Link previews</strong> (title, description and image fetched from the URL), embedded
+        <strong>posts from X</strong>, and <strong>code</strong> with syntax highlighting.</li>
+      <li><strong>Containers</strong> that hold their own sections, nested up to three levels, and the
+        <strong>contact form</strong> as a ready-made component.</li>
+    </ul>
+  </div>
+  <figure class="shot">
+    <img src="img/admin_layout.png" alt="The layout editor with a full-width text section and a two-column section" width="2160" height="1350" loading="lazy">
+    <figcaption><b>Layout mode in the editor.</b> Section 1 is full width with one text block; section 2 has two
+      columns, text on the left and an image chosen from the media library on the right. Sections and blocks are
+      reordered by dragging.</figcaption>
+  </figure>
+  <figure class="shot">
+    <img src="img/web_layout.png" alt="The same layout on the public site: two columns, numbered steps, cards and a call to action" width="1350" height="1350" loading="lazy">
+    <figcaption><b>The result.</b> A two-column section, a row of numbered steps, three cards and a call to action
+      that links to another series. On a phone the columns stack.</figcaption>
+  </figure>
+</section>
+
+<section class="block" id="organising">
+  <div class="head"><span class="num">03</span><h2>Categories, tags, pages and menus</h2></div>
+  <div class="col stack">
+    <p>Each article has one category and any number of tags, and each category and tag gets its own page on the
+      public site. <strong>Pages</strong> (About, Contact) are written in the same editor but stand outside the blog
+      and its listings. <strong>Menus</strong> for the header and footer are edited in the admin: an item points to a
+      page, to a built-in route (front page, blog, categories, series) or to an external address.</p>
+    <p>In the admin, the article list is searched by title and text, filtered by status (including
+      <em class="ui">scheduled</em>), category and author, and sorted; the filters stay in the address, so a filtered
+      list can be bookmarked.</p>
+  </div>
+  <figure class="shot">
+    <img src="img/admin_articles.png" alt="The admin article list with author, category, public or members-only, status and date" width="2160" height="1350" loading="lazy">
+    <figcaption><b>The article list.</b> Search, status, category, author and sort above; below, each article's
+      author, category, whether it is public (✓) or for members only (lock), its status (here one draft at the top)
+      and the publish date.</figcaption>
+  </figure>
+  <div class="two">
+    <figure class="shot">
+      <img src="img/admin_navigation.png" alt="The menu editor with five items of different types" width="2160" height="1350" loading="lazy">
+      <figcaption><b>Menus.</b> The main menu: three built-in routes and two pages. Items can be reordered and
+        set to open in a new tab.</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="img/web_category.png" alt="A category page on the public site with three article cards" width="2160" height="1350" loading="lazy">
+      <figcaption><b>A category page.</b> The category's name and description, then its articles as cards.
+        Tag pages work the same way.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="block" id="series">
+  <div class="head"><span class="num">04</span><h2>Series</h2></div>
+  <div class="col stack">
+    <p>A series ties articles into an ordered sequence: a tutorial in parts, a season of posts, a story told over
+      several weeks. You add articles to a series and put them in order in the admin. On the public site every
+      article in a series shows where it sits (<em>Del 4 af 4</em>, “part 4 of 4”) with links to the previous and
+      next part, and the series has its own page. A series can also use a theme of its own instead of the site's.</p>
+  </div>
+  <figure class="shot">
+    <img src="img/admin_series.png" alt="The series editor with name, slug, description, theme override and the ordered article list" width="2160" height="1350" loading="lazy">
+    <figcaption><b>Editing a series.</b> Name, slug, description and an optional theme override above; below, the
+      four articles in order, moved with the arrows.</figcaption>
+  </figure>
+  <div class="two">
+    <figure class="shot">
+      <img src="img/web_series.png" alt="The public series page listing four numbered articles" width="2160" height="1350" loading="lazy">
+      <figcaption><b>The series page.</b> The description and the parts in order, each with its excerpt and date.</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="img/web_series_nav.png" alt="The series box on an article: part 4 of 4 with a link to the previous part" width="1350" height="600" loading="lazy">
+      <figcaption><b>Inside an article.</b> The series box names the series and links to the neighbouring parts; it
+        is repeated after the text so readers can go straight on.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="block" id="public-site">
+  <div class="head"><span class="num">05</span><h2>The public website</h2></div>
+  <div class="col stack">
+    <p>The public site is a Nuxt application rendered on the server: each page is sent as finished HTML with its
+      title, description and social-sharing tags, and then becomes interactive in the browser. It has a front page
+      with the latest articles, the blog with pagination, category, tag and series pages, the pages you write, sign-up
+      and log-in, and a switch between light and dark mode. It works on a phone without a separate mobile site.</p>
+  </div>
+  <div class="col stack" id="finding">
+    <p><strong>Readers find content</strong> through a search box in the header. While they type it suggests
+      matching articles, tags, categories and series; Enter opens a results page ranked by PostgreSQL full-text
+      search, with the matching words highlighted in a snippet. Quotes search for an exact phrase and a minus sign
+      leaves a word out. No separate search service is needed, and members-only articles show up only for readers who
+      are logged in.</p>
+    <p><strong>Feeds</strong> in RSS 2.0 and Atom 1.0 cover the whole site and each category, tag and series (the 20
+      newest articles). Every page links the site's feeds, and category, tag and series pages also link their own, so
+      feed readers find them from the page address.</p>
+  </div>
+  <figure class="shot">
+    <img src="img/web_search_suggest.png" alt="The header search box with suggestions for articles and a tag" width="2160" height="384" loading="lazy">
+    <figcaption><b>Suggestions while typing.</b> Three letters, <em>tom</em>, are enough: matching articles first
+      (<em>Artikler</em>), then tags, categories and series, and a link to all results (<em>Se alle resultater</em>).</figcaption>
+  </figure>
+  <figure class="shot narrow">
+    <img src="img/web_search.png" alt="The search results page with highlighted matches" width="2160" height="1350" loading="lazy">
+    <figcaption><b>Search results.</b> Three articles for <em>tomater</em>, each with a snippet in which the matching
+      words are highlighted, including the singular <em>tomat</em>.</figcaption>
+  </figure>
+  <div class="phones">
+    <figure class="shot">
+      <img src="img/web_mobile_home.png" alt="The front page on a phone" width="780" height="1688" loading="lazy">
+      <figcaption><b>Front page on a phone.</b> The menu folds into a button.</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="img/web_mobile_article.png" alt="An article on a phone" width="780" height="1688" loading="lazy">
+      <figcaption><b>An article on a phone.</b> Breadcrumbs, title, author and series box.</figcaption>
+    </figure>
+  </div>
+  <p class="col muted" style="margin-top:20px">Optional analytics come from a self-hosted
+    <a href="https://umami.is/">Umami</a> instance, which counts visits without cookies; leave its website id empty
+    and no tracking script is loaded.</p>
+</section>
+
+<section class="block" id="readers">
+  <div class="head"><span class="num">06</span><h2>Readers: comments, likes and members</h2></div>
+  <div class="col stack">
+    <p><strong>Comments</strong> can be switched on per article. Readers write a name, an email address (not shown)
+      and the comment; replies are threaded one level. New comments wait in a moderation queue until someone approves
+      them. A hidden honeypot field and a per-address rate limit keep most automated spam out.
+      <strong>Likes</strong> need no account.</p>
+    <p><strong>Reader accounts</strong> are optional. A reader signs up with name and email; an admin approves the
+      account; the reader then logs in with a link sent by email, so there is no reader password to leak. Approved
+      readers can open articles marked <em class="ui">members only</em>; everyone else sees a log-in prompt instead of
+      the text. The whole log-in feature can be turned off in settings.</p>
+    <p>A <strong>contact form</strong> sends messages over SMTP to the address in settings. Until both are configured
+      it answers that it is unavailable instead of losing messages.</p>
+  </div>
+  <div class="two">
+    <figure class="shot">
+      <img src="img/web_comments.png" alt="Tags, a like count of 14 and three comments, one of them a reply" width="1350" height="900" loading="lazy">
+      <figcaption><b>Under an article.</b> Its tags, 14 likes and three approved comments, one of them a reply from
+        the author.</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="img/web_members.png" alt="The log-in prompt shown instead of a members-only article" width="900" height="700" loading="lazy">
+      <figcaption><b>Members only.</b> What a visitor who is not logged in sees: a prompt to log in or sign up.</figcaption>
+    </figure>
+  </div>
+  <div class="two">
+    <figure class="shot">
+      <img src="img/admin_comments.png" alt="The comment moderation list with pending and approved comments" width="2160" height="1350" loading="lazy">
+      <figcaption><b>Moderation.</b> Pending comments on top with approve and reject buttons; filters for pending,
+        approved and rejected with counts.</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="img/admin_readers.png" alt="The website users list with one pending and two approved readers" width="2160" height="1350" loading="lazy">
+      <figcaption><b>Reader accounts.</b> One sign-up waiting for approval, two approved readers. The key icon
+        creates a log-in link by hand, for a reader whose email did not arrive.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="block" id="look">
+  <div class="head"><span class="num">07</span><h2>Look and feel, from a settings page</h2></div>
+  <div class="col stack">
+    <p>The site's identity is data, not code: its name and description, the footer text (<code>{year}</code> is
+      filled in), a public email, phone and company details for the footer, the site language, social links and meta
+      keywords. The language sets the page's
+      <code>&lt;html lang&gt;</code> and the public site's own texts and dates: Danish and English ship, and another
+      language is one translation file. The
+      appearance is chosen from <strong>eight colour themes</strong> and <strong>four fonts</strong> (Inter, Manrope,
+      Source Serif 4, Atkinson Hyperlegible), and you decide whether the public site and the admin start in dark
+      mode. Readers can switch between light and dark themselves.</p>
+  </div>
+  <figure class="shot">
+    <img src="img/admin_settings.png" alt="The settings page with the four fonts and eight colour themes" width="1800" height="1350" loading="lazy">
+    <figcaption><b>Typography and theme.</b> The demo uses Source Serif 4 and the <em class="ui">Forest Green</em>
+      theme. Each theme sets the site's colours in both light and dark mode.</figcaption>
+  </figure>
+  <figure class="shot">
+    <img src="img/web_dark.png" alt="An article in dark mode" width="2160" height="1350" loading="lazy">
+    <figcaption><b>Dark mode.</b> The same article after the reader pressed the moon icon in the header. The
+      theme's colours carry over; only the background and text change.</figcaption>
+  </figure>
+</section>
+
+<section class="block nobreak" id="media">
+  <div class="head"><span class="num">08</span><h2>Images</h2></div>
+  <div class="col stack">
+    <p>Images are uploaded from the editor or the <em class="ui">Media</em> page and kept in a shared library you
+      pick from for featured images and image blocks. Uploads are checked by their content, not their file name: JPEG, PNG, GIF and WebP up to 10 MB and
+      40 megapixels are accepted. For each image the API stores a 400 px and an 800 px wide copy, and the site
+      serves the smaller copies on cards and lists.</p>
+    <p>Deleting a file removes the original and both copies. While it is still used, as a featured image, in an
+      article's text or layout, in a setting or as an avatar, the <em class="ui">Media</em> page lists where and asks
+      before it deletes, so an image does not silently disappear from a published page.</p>
+  </div>
+  <div class="two">
+    <figure class="shot">
+      <img src="img/admin_media_library.png" alt="The Media page with a grid of uploaded images and a delete button on each" width="2160" height="1350" loading="lazy">
+      <figcaption><b>The Media page.</b> Every uploaded file with its size and dimensions, an upload button and a
+        delete button per file.</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="img/admin_media.png" alt="The Select Image dialog with an upload area and eight images" width="2160" height="1350" loading="lazy">
+      <figcaption><b>Picking an image.</b> Drop a new image on the dialog or pick one already uploaded. (The demo's
+        images are generated illustrations, not photographs.)</figcaption>
+    </figure>
+  </div>
+
+  <div class="head" id="portability" style="margin-top:56px"><span class="num">08b</span><h2>Export and import</h2></div>
+  <div class="col stack">
+    <p>The <em class="ui">Packages</em> page exports content as a ZIP file: everything, only articles, only pages or
+      hand-picked items, optionally with tags, categories and site settings. Importing checks the package first and
+      then adds it to the site. Use it to move a site to a new server, to copy content between a test and a live
+      installation, or as a readable backup of the writing itself (the database backup in section 09 is the full one).</p>
+  </div>
+  <figure class="shot narrow">
+    <img src="img/admin_packages.png" alt="The Packages page with export options and an import drop area" width="2160" height="1350" loading="lazy">
+    <figcaption><b>Packages.</b> Export on the left, import on the right.</figcaption>
+  </figure>
+</section>
+
+<section class="block" id="self-hosting">
+  <div class="head"><span class="num">09</span><h2>Running it yourself</h2></div>
+  <div class="col stack">
+    <p>A production site is one Linux server with Docker Compose. 2 vCPU and 2 GB RAM is enough to start. The project
+      publishes four images (API, web, admin and a one-shot database initialiser) to the GitHub container registry;
+      they are configured entirely through environment variables at start-up, so the same images serve every site.
+      <a href="https://caddyserver.com">Caddy</a> in front handles HTTPS certificates, routing and security headers.</p>
+  </div>
+  <div class="arch" role="img" aria-label="Architecture: Caddy routes the public host to the web app, the admin host to the admin app, and API and upload paths to the API, which uses PostgreSQL and an uploads volume">
+    <svg viewBox="0 0 960 330" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker></defs>
+      <rect class="host" x="150" y="10" width="800" height="310" rx="14"/>
+      <text class="sub" x="166" y="32">one server · Docker Compose</text>
+      <rect class="box" x="10" y="135" width="110" height="56" rx="10"/><text x="65" y="168" text-anchor="middle">Browser</text>
+      <rect class="box hi" x="180" y="125" width="140" height="76" rx="10"/><text x="250" y="158" text-anchor="middle">Caddy</text><text class="sub" x="250" y="176" text-anchor="middle">HTTPS, routing, headers</text>
+      <rect class="box" x="400" y="48" width="160" height="60" rx="10"/><text x="480" y="74" text-anchor="middle">web</text><text class="sub" x="480" y="92" text-anchor="middle">public site, Nuxt SSR</text>
+      <rect class="box" x="400" y="133" width="160" height="60" rx="10"/><text x="480" y="159" text-anchor="middle">admin</text><text class="sub" x="480" y="177" text-anchor="middle">admin panel, Nuxt</text>
+      <rect class="box hi" x="400" y="226" width="160" height="60" rx="10"/><text x="480" y="252" text-anchor="middle">api</text><text class="sub" x="480" y="270" text-anchor="middle">ASP.NET Core 10</text>
+      <rect class="box" x="640" y="196" width="140" height="52" rx="10"/><text x="710" y="226" text-anchor="middle">PostgreSQL 17</text>
+      <rect class="box" x="640" y="262" width="140" height="44" rx="10"/><text x="710" y="289" text-anchor="middle">uploads volume</text>
+      <rect class="box" x="640" y="60" width="140" height="52" rx="10"/><text x="710" y="84" text-anchor="middle">db-init</text><text class="sub" x="710" y="100" text-anchor="middle">migrations, first admin</text>
+      <rect class="box" x="820" y="196" width="110" height="52" rx="10"/><text x="875" y="220" text-anchor="middle">Umami</text><text class="sub" x="875" y="236" text-anchor="middle">optional</text>
+      <path class="wire" d="M120 163 H178"/>
+      <path class="wire" d="M320 145 C360 145 360 78 398 78"/>
+      <text class="sub" x="300" y="70">public host</text>
+      <path class="wire" d="M320 163 H398"/>
+      <text class="sub" x="326" y="157">admin host</text>
+      <path class="wire" d="M320 183 C360 183 360 256 398 256"/>
+      <text class="sub" x="300" y="262">/api, /uploads</text>
+      <path class="wire" d="M560 78 C600 78 600 240 562 248"/>
+      <path class="wire" d="M560 248 C600 236 610 222 638 222"/>
+      <path class="wire" d="M560 266 C600 276 610 284 638 284"/>
+      <path class="wire" d="M710 112 V194"/>
+      <path class="wire" d="M780 222 H818" style="marker-end:none"/>
+    </svg>
+  </div>
+  <div class="grid">
+    <div class="cell"><h3>Separate hostnames</h3><p>The admin panel and its API run on their own hostname; the public host never routes admin API calls.</p></div>
+    <div class="cell"><h3>Short-lived tokens</h3><p>JWT access tokens (15 minutes by default) with rotating refresh tokens in an HttpOnly cookie, and separate token audiences for authors and readers.</p></div>
+    <div class="cell"><h3>Client certificates</h3><p>Optional mutual-TLS log-in for the admin, so the admin panel only opens on devices with your certificate.</p></div>
+    <div class="cell"><h3>Defensive defaults</h3><p>Server-side HTML sanitising, URL-scheme checks in layouts, rate limits on log-in, comments and contact, a 12-character minimum for author passwords, and the API refuses to start with a weak JWT secret.</p></div>
+    <div class="cell"><h3>Readable data access</h3><p>Hand-written, parameterised SQL through Npgsql at runtime; EF Core only for schema migrations, applied by <code>db-init</code> before the API starts.</p></div>
+    <div class="cell"><h3>Backups and upgrades</h3><p>Backup and restore scripts for the database and uploads, a restore drill to prove backups work, and upgrades by changing one image version.</p></div>
+  </div>
+  <div class="col stack" style="margin-top:28px">
+    <p><strong>Built with AI agents.</strong> Most of the code was written by AI coding agents working from a task
+      backlog, with a person deciding what to build and checking the results. The repository documents how that
+      worked, including the security bugs the agents introduced and how they were caught
+      (<code>docs/ai-workflow.md</code>). That is useful reading if you are deciding how far to trust the code, and it
+      is why the project leans on integration tests against a real PostgreSQL.</p>
+  </div>
+</section>
+
+<section class="block" id="limits">
+  <div class="head"><span class="num">10</span><h2>Strengths and limits</h2></div>
+  <div class="col"><p>What the CMS does well, and where it stops, so you can decide before you install it.</p></div>
+  <div class="scroll-x">
+  <table class="limits">
+    <tr><th>Strength: you own everything</th><td>Content, readers and analytics stay in your database on your server. Export packages and SQL backups keep it portable. MIT licence.</td></tr>
+    <tr><th>Strength: small and fast</th><td>Server-rendered pages, a few containers, one small VM. No PHP stack, no plugin updates to chase.</td></tr>
+    <tr><th>Strength: a complete reader side</th><td>Comments with moderation, likes, approved reader accounts with email log-in links, members-only articles and a contact form, without third-party services.</td></tr>
+    <tr><th>Strength: readers find content</th><td>Site search with suggestions as you type, and RSS and Atom feeds for the site and every category, tag and series, from the same PostgreSQL database.</td></tr>
+    <tr><th>Deliberately not included: plugins and multi-tenancy</th><td>There is no plugin system and no shared multi-site hosting, so there are no plugin updates to chase and no tenant boundaries to get wrong. Block types and embeddable components are built in, from one registry shared by the editor and the site; new ones are added in code. The only embeddable component today is the contact form.</td></tr>
+    <tr><th>Limit: two interface languages</th><td>The public site's own texts ship in Danish and English; another language is a translation file and an image rebuild. One installation shows one language, not several side by side. The admin panel is English only.</td></tr>
+    <tr><th>Limit: one site per installation</th><td>Several sites mean several Compose stacks. There are no per-site roles beyond admin and user.</td></tr>
+    <tr><th>Limit: you are the operator</th><td>Updates, backups, SMTP for email and a server to run it on are yours to arrange. The deployment guide walks through them, but nobody does it for you.</td></tr>
+  </table>
+  </div>
+</section>
+
+<section class="block nobreak" id="start">
+  <div class="head"><span class="num">11</span><h2>Get started</h2></div>
+  <div class="col stack">
+    <p><strong>Try it locally</strong> with Docker and Compose, from a clone of the repository:</p>
+<pre>cp .env.example .env
+docker compose up -d
+# public site: http://localhost:3000
+# admin panel: http://localhost:3001
+# first log-in: ADMIN_EMAIL / ADMIN_PASSWORD from .env,
+#   or the generated password in: docker compose logs db-init</pre>
+    <p><strong>Run a site</strong> from the published images with the step-by-step guide in
+      <code>docs/deployment.md</code>: DNS, configuration, Caddy, first log-in, backups and the restore drill.
+      If your site collects reader data, read <code>docs/privacy.md</code> as well.</p>
+    <p>Source, issues and documentation: <a href="https://github.com/mstarch-dk/sharpquill">github.com/mstarch-dk/sharpquill</a>.</p>
+  </div>
+</section>
+
+<footer class="foot">
+  <p>All screenshots show a demo installation with fictional content: the site <em>Nyttehaven</em>, its writers
+    Ida Holm and Jonas Berg, its readers and commenters are invented, and its images are generated illustrations.
+    Screenshots taken <span class="mono" id="shot-date">2026-11-27</span>. This brochure is built from the repository's
+    <code>marketing/</code> folder and refreshed with each edition.</p>
+</footer>
+
+</div>
+</body>
+</html>

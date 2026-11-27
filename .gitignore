@@ -1,0 +1,103 @@
+# Build results
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+
+# .NET artifacts
+*.dll
+*.exe
+*.pdb
+*.cache
+!.gitkeep
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.vspscc
+*.vssscc
+
+# JetBrains Rider
+.idea/
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+!src/frontend/**/[Pp]ackages/*
+*.nuget.props
+*.nuget.targets
+
+# Test results
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+# Coverage reports (backend: ReportGenerator output; frontend: Vitest --coverage)
+coverage-report/
+src/frontend/*/coverage/
+
+# Node.js
+node_modules/
+.npm
+.pnpm-store/
+
+# Nuxt
+.nuxt/
+.output/
+.nitro/
+dist/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editor backup files
+*~
+*.swp
+*.swo
+*.bak
+*.tmp
+*.orig
+
+# Docker
+.docker/
+
+# Media uploads (managed separately) - only at root level
+/uploads/
+/media/
+# Uploads written by the API in development: keep the directory, never the files
+src/backend/api/uploads/*
+!src/backend/api/uploads/.gitkeep
+
+# Local settings
+appsettings.*.local.json
+# Claude Code: share settings.json, agents and skills, keep everything local to the developer out of git
+.claude/*
+!.claude/settings.json
+!.claude/agents/
+!.claude/skills/
+.claude/settings.local.json
+
+# Private ops notes (never publish)
+ops-private/
+
+# Marketing build output (marketing/README.md)
+marketing/node_modules/
+marketing/site/img/
+marketing/demo/images/
+marketing/.explore/

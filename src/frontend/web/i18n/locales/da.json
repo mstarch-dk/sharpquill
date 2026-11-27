@@ -1,0 +1,183 @@
+{
+  "site": {
+    "defaultTitle": "Forside",
+    "defaultDescription": "Udforsk vores seneste artikler og indsigter"
+  },
+  "common": {
+    "goHome": "Gå til forsiden",
+    "logIn": "Log ind",
+    "logOut": "Log ud",
+    "signUp": "Tilmeld dig",
+    "sending": "Sender...",
+    "cancel": "Annuller",
+    "readMore": "Læs mere",
+    "backToBlog": "Tilbage til blog",
+    "articleCount": "{n} artikel | {n} artikler",
+    "loadArticlesError": "Kunne ikke indlæse artikler. Prøv igen senere."
+  },
+  "header": {
+    "switchToLight": "Skift til lyst tema",
+    "switchToDark": "Skift til mørkt tema",
+    "lightMode": "Lyst tema",
+    "darkMode": "Mørkt tema"
+  },
+  "footer": {
+    "quickLinks": "Hurtige links",
+    "contact": "Kontakt",
+    "followUs": "Følg med for de seneste opdateringer og artikler.",
+    "follow": "Følg med"
+  },
+  "breadcrumbs": {
+    "label": "Brødkrummer",
+    "home": "Hjem"
+  },
+  "pagination": {
+    "label": "Sidenavigation",
+    "previous": "Forrige",
+    "next": "Næste"
+  },
+  "error": {
+    "notFoundTitle": "Siden blev ikke fundet",
+    "serverErrorTitle": "Serverfejl",
+    "genericTitle": "Der opstod en fejl",
+    "notFoundMessage": "Siden du leder efter findes ikke eller er blevet flyttet.",
+    "serverErrorMessage": "Noget gik galt. Prøv igen senere.",
+    "unexpectedMessage": "Der opstod en uventet fejl.",
+    "viewBlog": "Se blog"
+  },
+  "home": {
+    "welcome": "Velkommen",
+    "intro": "Udforsk vores seneste artikler, vejledninger og indsigter.",
+    "viewArticles": "Se artikler",
+    "latestArticles": "Seneste artikler",
+    "viewAll": "Se alle",
+    "emptyTitle": "Ingen artikler endnu",
+    "emptyText": "Kom tilbage snart for nyt indhold!"
+  },
+  "page": {
+    "fallbackTitle": "Side"
+  },
+  "blog": {
+    "title": "Blog",
+    "titleWithPage": "Blog - Side {page}",
+    "description": "Gennemse alle vores artikler og opdag indsigtsfuldt indhold.",
+    "subtitle": "Gennemse alle vores artikler",
+    "empty": "Ingen artikler fundet."
+  },
+  "article": {
+    "notFound": "Artiklen blev ikke fundet",
+    "fallbackTitle": "Artikel",
+    "signInRequiredTitle": "Kræver login",
+    "signInRequiredText": "Denne artikel kræver at du er logget ind for at læse den.",
+    "author": "Forfatter",
+    "tags": "Tags:"
+  },
+  "category": {
+    "notFound": "Kategorien blev ikke fundet",
+    "fallbackName": "Kategori",
+    "title": "{name} - Artikler",
+    "description": "Gennemse artikler i {name}",
+    "empty": "Ingen artikler fundet i denne kategori."
+  },
+  "tag": {
+    "notFound": "Tag blev ikke fundet",
+    "fallbackName": "Tag",
+    "title": "Artikler tagget \"{name}\"",
+    "description": "Gennemse alle artikler tagget med {name}",
+    "articleCount": "{n} artikel med dette tag | {n} artikler med dette tag",
+    "empty": "Ingen artikler fundet med dette tag."
+  },
+  "series": {
+    "title": "Serier",
+    "description": "Udforsk vores artikelserier for dybdegående indhold i flere dele.",
+    "subtitle": "Artikelserier i flere dele til dybdegående udforskning af emner",
+    "loadError": "Kunne ikke indlæse serier. Prøv igen senere.",
+    "empty": "Ingen serier tilgængelige endnu.",
+    "notFound": "Serien blev ikke fundet",
+    "fallbackName": "Serie",
+    "detailDescription": "Læs artikelserien {name}",
+    "partOf": "Del {current} af {total} i {series}"
+  },
+  "search": {
+    "label": "Søg på siden",
+    "placeholder": "Søg…",
+    "submit": "Søg",
+    "title": "Søg",
+    "titleWithQuery": "Søgning: {query}",
+    "description": "Søg i alle artikler på siden",
+    "prompt": "Skriv et eller flere ord for at søge i artiklerne. Brug \"anførselstegn\" for en præcis frase og -ord for at udelade et ord.",
+    "searching": "Søger…",
+    "resultCount": "{n} resultat for \"{query}\" | {n} resultater for \"{query}\"",
+    "noResults": "Ingen resultater for \"{query}\".",
+    "noResultsHint": "Prøv andre eller færre ord, eller tjek stavningen.",
+    "error": "Søgningen kunne ikke gennemføres. Prøv igen senere.",
+    "membersOnly": "Kun for medlemmer",
+    "suggestions": {
+      "label": "Forslag",
+      "articles": "Artikler",
+      "tags": "Tags",
+      "categories": "Kategorier",
+      "series": "Serier",
+      "seeAll": "Se alle resultater for “{query}”"
+    }
+  },
+  "comments": {
+    "title": "Kommentarer",
+    "loading": "Indlæser kommentarer...",
+    "loadError": "Kunne ikke indlæse kommentarer",
+    "reply": "Svar",
+    "replyTo": "Svar til {name}",
+    "namePlaceholder": "Dit navn",
+    "emailPlaceholder": "Din email",
+    "replyPlaceholder": "Skriv dit svar...",
+    "commentPlaceholder": "Skriv din kommentar...",
+    "sendReply": "Send svar",
+    "sendComment": "Send kommentar",
+    "empty": "Ingen kommentarer endnu. Vær den første til at kommentere!",
+    "add": "Tilføj kommentar",
+    "pendingApproval": "Din kommentar afventer godkendelse",
+    "sendError": "Kunne ikke sende kommentaren"
+  },
+  "contact": {
+    "error": "Der opstod en fejl. Prøv igen senere.",
+    "thanksTitle": "Tak for din besked!",
+    "thanksText": "Vi vender tilbage hurtigst muligt.",
+    "name": "Navn",
+    "email": "E-mail",
+    "subject": "Emne",
+    "message": "Besked",
+    "send": "Send besked"
+  },
+  "tweet": {
+    "viewOnX": "Se på X"
+  },
+  "login": {
+    "description": "Log ind på din konto",
+    "failed": "Login mislykkedes",
+    "loggingIn": "Logger ind...",
+    "success": "Du er nu logget ind!",
+    "redirecting": "Omdirigerer...",
+    "linkExpired": "Dit login-link er muligvis udløbet eller allerede brugt. {signUp} for at få et nyt.",
+    "alreadyLoggedIn": "Du er allerede logget ind.",
+    "info": "For at logge ind skal du bruge et login-link fra en administrator. Hvis du endnu ikke har en konto, kan du tilmelde dig herunder."
+  },
+  "signup": {
+    "description": "Opret en konto for at få adgang til eksklusivt indhold",
+    "fillBoth": "Udfyld venligst både navn og email",
+    "failed": "Tilmelding mislykkedes",
+    "receivedTitle": "Tilmelding modtaget!",
+    "receivedText": "Din tilmelding afventer godkendelse. Når du er godkendt, vil du modtage et login-link.",
+    "intro": "Opret en konto for at få adgang til eksklusivt indhold. Din tilmelding skal godkendes af en administrator.",
+    "name": "Navn",
+    "email": "Email",
+    "namePlaceholder": "Dit navn",
+    "emailPlaceholder": "din{'@'}email.dk",
+    "submitting": "Tilmelder...",
+    "haveAccount": "Har du allerede en konto? {logIn}"
+  },
+  "auth": {
+    "signupFailed": "Tilmelding mislykkedes. Prøv igen senere.",
+    "invalidResponse": "Ugyldigt svar fra serveren",
+    "loginFailed": "Login mislykkedes. Kontroller dit login-link."
+  }
+}

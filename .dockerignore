@@ -1,0 +1,14 @@
+.git
+.github
+.claude
+backlog
+docs
+ops-private
+src/frontend
+**/bin
+**/obj
+**/node_modules
+**/uploads
+**/.idea
+**/*.user
+**/*.log

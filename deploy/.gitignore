@@ -1,0 +1,5 @@
+.env
+backups/
+Caddyfile
+certs/*
+!certs/README.md

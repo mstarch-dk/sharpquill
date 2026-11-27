@@ -1,0 +1,172 @@
+# Local development stack. Quick start: cp .env.example .env && docker compose up -d
+# All published ports bind to 127.0.0.1 only. Configuration comes from .env (see .env.example).
+services:
+  db:
+    image: postgres:17
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cms}
+      POSTGRES_USER: ${POSTGRES_USER:-cms_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Copy .env.example to .env first}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cms_user} -d ${POSTGRES_DB:-cms}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?Copy .env.example to .env first}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "127.0.0.1:${PGADMIN_PORT:-5050}:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+  db-init:
+    build:
+      context: .
+      dockerfile: docker/db-init/Dockerfile
+    environment:
+      ConnectionStrings__DefaultConnection: Host=db;Database=${POSTGRES_DB:-cms};Username=${POSTGRES_USER:-cms_user};Password=${POSTGRES_PASSWORD}
+      # First-run admin (only used while the authors table is empty). Without ADMIN_PASSWORD a random
+      # password is generated and printed once: docker compose logs db-init
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    ports:
+      - "127.0.0.1:${API_PORT:-5000}:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5000
+      ConnectionStrings__DefaultConnection: Host=db;Database=${POSTGRES_DB:-cms};Username=${POSTGRES_USER:-cms_user};Password=${POSTGRES_PASSWORD}
+      Jwt__Secret: ${JWT_SECRET:?Copy .env.example to .env first}
+      # Browser origins allowed by CORS (follow the published frontend ports)
+      Cors__AdminOrigins__0: http://localhost:${ADMIN_PORT:-3001}
+      Cors__PublicOrigins__0: http://localhost:${WEB_PORT:-3000}
+      # Bind mounts do not deliver inotify events reliably (Docker Desktop, WSL), so poll for changes
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+    volumes:
+      # dotnet watch runs in /app/api, so the sources must be mounted over /app
+      - ./src/backend:/app
+      # Keep container build output off the host tree (and the host's out of the container)
+      - api_bin:/app/api/bin
+      - api_obj:/app/api/obj
+      - core_bin:/app/core/bin
+      - core_obj:/app/core/obj
+      - application_bin:/app/application/bin
+      - application_obj:/app/application/obj
+      - migrations_bin:/app/migrations/bin
+      - migrations_obj:/app/migrations/obj
+      - uploads_data:/app/api/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
+
+  web:
+    build:
+      context: ./src/frontend
+      dockerfile: web/Dockerfile
+    ports:
+      - "127.0.0.1:${WEB_PORT:-3000}:3000"
+    environment:
+      # Browser requests go to the published API port; SSR requests stay inside the Docker network
+      NUXT_PUBLIC_API_BASE: http://localhost:${API_PORT:-5000}
+      NUXT_API_BASE_INTERNAL: http://api:5000
+      # No Caddy in dev: the web app proxies /uploads/** to the API itself
+      NUXT_UPLOADS_PROXY: http://api:5000
+      NUXT_PUBLIC_UMAMI_HOST: http://localhost:${UMAMI_PORT:-3003}
+      NUXT_PUBLIC_UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID:-}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    depends_on:
+      - api
+
+  admin:
+    build:
+      context: ./src/frontend
+      dockerfile: admin/Dockerfile
+    ports:
+      - "127.0.0.1:${ADMIN_PORT:-3001}:3000"
+    environment:
+      NUXT_PUBLIC_API_BASE: http://localhost:${API_PORT:-5000}
+      NUXT_UPLOADS_PROXY: http://api:5000
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    depends_on:
+      - api
+
+  umami-db-init:
+    image: postgres:17
+    entrypoint: >
+      sh -c "psql -h db -U ${POSTGRES_USER:-cms_user} -d ${POSTGRES_DB:-cms} -tc
+      \"SELECT 1 FROM pg_database WHERE datname = 'umami'\" |
+      grep -q 1 || psql -h db -U ${POSTGRES_USER:-cms_user} -d ${POSTGRES_DB:-cms} -c 'CREATE DATABASE umami OWNER ${POSTGRES_USER:-cms_user}'"
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  umami:
+    image: ghcr.io/umami-software/umami:3.5.0
+    ports:
+      - "127.0.0.1:${UMAMI_PORT:-3003}:3000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cms_user}:${POSTGRES_PASSWORD}@db:5432/umami
+      APP_SECRET: ${UMAMI_APP_SECRET:?Copy .env.example to .env first}
+    depends_on:
+      db:
+        condition: service_healthy
+      umami-db-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/heartbeat || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+  uploads_data:
+  api_bin:
+  api_obj:
+  core_bin:
+  core_obj:
+  application_bin:
+  application_obj:
+  migrations_bin:
+  migrations_obj:

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 210" role="img" aria-label="Sharpquill">
+<style>:root{color:#0F3D3E;--sq-cutout:#fff}</style>
+
+<g fill="currentColor">
+  <path d="M78 180C91 139 111 98 145 63C168 39 198 22 226 14C217 34 208 55 197 75C183 101 164 121 139 135C119 147 98 161 78 180Z"/>
+  <path d="M92 165C116 127 151 91 198 51C165 90 132 127 92 165Z" fill="var(--sq-cutout, #fff)"/>
+  <path d="M139 135C151 113 174 96 205 88C194 107 177 123 157 135C150 139 144 139 139 135Z"/>
+  <path d="M76 182C107 164 145 154 181 159C151 160 116 170 76 182Z"/>
+  <path d="M76 182L63 196L78 180Z"/>
+</g>
+</svg>

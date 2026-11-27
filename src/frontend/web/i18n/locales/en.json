@@ -1,0 +1,183 @@
+{
+  "site": {
+    "defaultTitle": "Home",
+    "defaultDescription": "Explore our latest articles and insights"
+  },
+  "common": {
+    "goHome": "Go to the home page",
+    "logIn": "Log in",
+    "logOut": "Log out",
+    "signUp": "Sign up",
+    "sending": "Sending...",
+    "cancel": "Cancel",
+    "readMore": "Read more",
+    "backToBlog": "Back to blog",
+    "articleCount": "{n} article | {n} articles",
+    "loadArticlesError": "Could not load articles. Please try again later."
+  },
+  "header": {
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode",
+    "lightMode": "Light mode",
+    "darkMode": "Dark mode"
+  },
+  "footer": {
+    "quickLinks": "Quick links",
+    "contact": "Contact",
+    "followUs": "Follow along for the latest updates and articles.",
+    "follow": "Follow"
+  },
+  "breadcrumbs": {
+    "label": "Breadcrumbs",
+    "home": "Home"
+  },
+  "pagination": {
+    "label": "Pagination",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "error": {
+    "notFoundTitle": "Page not found",
+    "serverErrorTitle": "Server error",
+    "genericTitle": "An error occurred",
+    "notFoundMessage": "The page you are looking for does not exist or has been moved.",
+    "serverErrorMessage": "Something went wrong. Please try again later.",
+    "unexpectedMessage": "An unexpected error occurred.",
+    "viewBlog": "View blog"
+  },
+  "home": {
+    "welcome": "Welcome",
+    "intro": "Explore our latest articles, guides and insights.",
+    "viewArticles": "View articles",
+    "latestArticles": "Latest articles",
+    "viewAll": "View all",
+    "emptyTitle": "No articles yet",
+    "emptyText": "Check back soon for new content!"
+  },
+  "page": {
+    "fallbackTitle": "Page"
+  },
+  "blog": {
+    "title": "Blog",
+    "titleWithPage": "Blog - Page {page}",
+    "description": "Browse all our articles and discover insightful content.",
+    "subtitle": "Browse all our articles",
+    "empty": "No articles found."
+  },
+  "article": {
+    "notFound": "Article not found",
+    "fallbackTitle": "Article",
+    "signInRequiredTitle": "Login required",
+    "signInRequiredText": "You need to be logged in to read this article.",
+    "author": "Author",
+    "tags": "Tags:"
+  },
+  "category": {
+    "notFound": "Category not found",
+    "fallbackName": "Category",
+    "title": "{name} - Articles",
+    "description": "Browse articles in {name}",
+    "empty": "No articles found in this category."
+  },
+  "tag": {
+    "notFound": "Tag not found",
+    "fallbackName": "Tag",
+    "title": "Articles tagged \"{name}\"",
+    "description": "Browse all articles tagged with {name}",
+    "articleCount": "{n} article with this tag | {n} articles with this tag",
+    "empty": "No articles found with this tag."
+  },
+  "series": {
+    "title": "Series",
+    "description": "Explore our article series for in-depth content in several parts.",
+    "subtitle": "Multi-part article series for in-depth exploration of topics",
+    "loadError": "Could not load series. Please try again later.",
+    "empty": "No series available yet.",
+    "notFound": "Series not found",
+    "fallbackName": "Series",
+    "detailDescription": "Read the article series {name}",
+    "partOf": "Part {current} of {total} in {series}"
+  },
+  "search": {
+    "label": "Search the site",
+    "placeholder": "Search…",
+    "submit": "Search",
+    "title": "Search",
+    "titleWithQuery": "Search: {query}",
+    "description": "Search all articles on the site",
+    "prompt": "Enter one or more words to search the articles. Use \"quotes\" for an exact phrase and -word to leave a word out.",
+    "searching": "Searching…",
+    "resultCount": "{n} result for \"{query}\" | {n} results for \"{query}\"",
+    "noResults": "No results for \"{query}\".",
+    "noResultsHint": "Try different or fewer words, or check the spelling.",
+    "error": "The search could not be completed. Please try again later.",
+    "membersOnly": "Members only",
+    "suggestions": {
+      "label": "Suggestions",
+      "articles": "Articles",
+      "tags": "Tags",
+      "categories": "Categories",
+      "series": "Series",
+      "seeAll": "See all results for “{query}”"
+    }
+  },
+  "comments": {
+    "title": "Comments",
+    "loading": "Loading comments...",
+    "loadError": "Could not load comments",
+    "reply": "Reply",
+    "replyTo": "Reply to {name}",
+    "namePlaceholder": "Your name",
+    "emailPlaceholder": "Your email",
+    "replyPlaceholder": "Write your reply...",
+    "commentPlaceholder": "Write your comment...",
+    "sendReply": "Send reply",
+    "sendComment": "Send comment",
+    "empty": "No comments yet. Be the first to comment!",
+    "add": "Add comment",
+    "pendingApproval": "Your comment is awaiting approval",
+    "sendError": "Could not send the comment"
+  },
+  "contact": {
+    "error": "An error occurred. Please try again later.",
+    "thanksTitle": "Thank you for your message!",
+    "thanksText": "We will get back to you as soon as possible.",
+    "name": "Name",
+    "email": "Email",
+    "subject": "Subject",
+    "message": "Message",
+    "send": "Send message"
+  },
+  "tweet": {
+    "viewOnX": "View on X"
+  },
+  "login": {
+    "description": "Log in to your account",
+    "failed": "Login failed",
+    "loggingIn": "Logging in...",
+    "success": "You are now logged in!",
+    "redirecting": "Redirecting...",
+    "linkExpired": "Your login link may have expired or already been used. {signUp} to get a new one.",
+    "alreadyLoggedIn": "You are already logged in.",
+    "info": "To log in you need a login link from an administrator. If you do not have an account yet, you can sign up below."
+  },
+  "signup": {
+    "description": "Create an account to get access to exclusive content",
+    "fillBoth": "Please fill in both name and email",
+    "failed": "Sign-up failed",
+    "receivedTitle": "Sign-up received!",
+    "receivedText": "Your sign-up is awaiting approval. Once approved, you will receive a login link.",
+    "intro": "Create an account to get access to exclusive content. Your sign-up must be approved by an administrator.",
+    "name": "Name",
+    "email": "Email",
+    "namePlaceholder": "Your name",
+    "emailPlaceholder": "you{'@'}example.com",
+    "submitting": "Signing up...",
+    "haveAccount": "Already have an account? {logIn}"
+  },
+  "auth": {
+    "signupFailed": "Sign-up failed. Please try again later.",
+    "invalidResponse": "Invalid response from the server",
+    "loginFailed": "Login failed. Check your login link."
+  }
+}

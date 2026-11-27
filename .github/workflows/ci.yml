@@ -1,0 +1,317 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Decides which jobs a change needs. Pull requests run only the parts they touch; pushes to main
+  # and workflow changes run everything (skipped jobs report as "skipped", which does not block a PR).
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      backend: ${{ steps.matrix.outputs.backend }}
+      frontend: ${{ steps.matrix.outputs.frontend }}
+      apps: ${{ steps.matrix.outputs.apps }}
+      images: ${{ steps.matrix.outputs.images }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'src/backend/**'
+              - 'docker/api/**'
+              - 'docker/db-init/**'
+            web:
+              - 'src/frontend/web/**'
+              - 'src/frontend/themes/**'
+              - 'src/frontend/layers/**'
+            admin:
+              - 'src/frontend/admin/**'
+              - 'src/frontend/themes/**'
+              - 'src/frontend/layers/**'
+            ci:
+              - '.github/workflows/**'
+
+      - name: Build job matrices
+        id: matrix
+        env:
+          ALL: ${{ github.event_name == 'push' || steps.filter.outputs.ci == 'true' }}
+          BACKEND: ${{ steps.filter.outputs.backend }}
+          WEB: ${{ steps.filter.outputs.web }}
+          ADMIN: ${{ steps.filter.outputs.admin }}
+        run: |
+          on() { [[ "$ALL" == true || "$1" == true ]] && echo true || echo false; }
+          backend=$(on "$BACKEND"); web=$(on "$WEB"); admin=$(on "$ADMIN")
+
+          apps=$(jq -nc --argjson web "$web" --argjson admin "$admin" \
+            '[if $web then "web" else empty end, if $admin then "admin" else empty end]')
+          images=$(jq -nc --argjson backend "$backend" --argjson web "$web" --argjson admin "$admin" '[
+            if $backend then {image: "api", context: ".", dockerfile: "docker/api/Dockerfile.prod"},
+                             {image: "db-init", context: ".", dockerfile: "docker/db-init/Dockerfile"} else empty end,
+            if $web then {image: "web", context: "src/frontend", dockerfile: "src/frontend/web/Dockerfile"} else empty end,
+            if $admin then {image: "admin", context: "src/frontend", dockerfile: "src/frontend/admin/Dockerfile"} else empty end
+          ]')
+
+          {
+            echo "backend=$backend"
+            echo "frontend=$([[ "$apps" != '[]' ]] && echo true || echo false)"
+            echo "apps=$apps"
+            echo "images=$images"
+          } | tee -a "$GITHUB_OUTPUT"
+
+  test-backend:
+    name: Test Backend
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: cms_test
+          POSTGRES_USER: cms_user
+          POSTGRES_PASSWORD: cms_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ hashFiles('src/backend/**/*.csproj') }}
+          restore-keys: nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: src/backend
+
+      - name: Build
+        run: dotnet build --no-restore
+        working-directory: src/backend
+
+      - name: Test
+        run: >-
+          dotnet test --no-build --verbosity normal
+          --settings api.Tests/coverlet.runsettings --collect "XPlat Code Coverage" --results-directory TestResults
+        working-directory: src/backend
+        env:
+          ConnectionStrings__DefaultConnection: Host=localhost;Database=cms_test;Username=cms_user;Password=cms_password
+
+      # Runs after failing tests too, so the report shows what the run did cover
+      - name: Coverage report
+        if: ${{ !cancelled() && hashFiles('src/backend/TestResults/**/coverage.cobertura.xml') != '' }}
+        working-directory: src/backend
+        run: |
+          dotnet tool restore
+          dotnet reportgenerator -reports:"TestResults/*/coverage.cobertura.xml" -targetdir:coverage-report \
+            -reporttypes:"Html;MarkdownSummaryGithub;JsonSummary"
+          cat coverage-report/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: ${{ !cancelled() && hashFiles('src/backend/coverage-report/index.html') != '' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-backend
+          path: src/backend/coverage-report
+          retention-days: 14
+
+      # Ratchet: raise the minimums when coverage grows; never lower them to make a PR pass
+      - name: Coverage gate
+        working-directory: src/backend
+        env:
+          MIN_LINES: 94
+          MIN_BRANCHES: 79
+        run: |
+          lines=$(jq '.summary.linecoverage' coverage-report/Summary.json)
+          branches=$(jq '.summary.branchcoverage' coverage-report/Summary.json)
+          echo "Line coverage $lines% (minimum $MIN_LINES%), branch coverage $branches% (minimum $MIN_BRANCHES%)"
+          failed=0
+          if ! jq -e --argjson min "$MIN_LINES" '.summary.linecoverage >= $min' coverage-report/Summary.json > /dev/null; then
+            echo "::error::Line coverage $lines% is below the minimum of $MIN_LINES%"; failed=1
+          fi
+          if ! jq -e --argjson min "$MIN_BRANCHES" '.summary.branchcoverage >= $min' coverage-report/Summary.json > /dev/null; then
+            echo "::error::Branch coverage $branches% is below the minimum of $MIN_BRANCHES%"; failed=1
+          fi
+          exit $failed
+
+  # Lint, typecheck and unit tests with coverage: the production build runs inside the Docker image build below.
+  frontend:
+    name: Frontend ${{ matrix.app }}
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(needs.changes.outputs.apps) }}
+
+    defaults:
+      run:
+        working-directory: src/frontend/${{ matrix.app }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          # Same major as the Dockerfiles (node:26-alpine): npm 10 (Node 22) rejects lockfiles written by npm 11
+          node-version: '26'
+          cache: 'npm'
+          cache-dependency-path: src/frontend/${{ matrix.app }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      # Fails below the coverage thresholds in vitest.config.ts
+      - name: Unit tests with coverage
+        run: npm run test:coverage
+
+      - name: Coverage summary
+        if: ${{ !cancelled() && hashFiles(format('src/frontend/{0}/coverage/coverage-summary.json', matrix.app)) != '' }}
+        env:
+          APP: ${{ matrix.app }}
+        run: |
+          jq -r --arg app "$APP" '.total | [
+            "### Frontend coverage: \($app)", "",
+            "| Lines | Branches | Statements | Functions |", "|---:|---:|---:|---:|",
+            "| \(.lines.pct)% | \(.branches.pct)% | \(.statements.pct)% | \(.functions.pct)% |"
+          ] | join("\n")' coverage/coverage-summary.json >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: ${{ !cancelled() && hashFiles(format('src/frontend/{0}/coverage/index.html', matrix.app)) != '' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-${{ matrix.app }}
+          path: src/frontend/${{ matrix.app }}/coverage
+          retention-days: 14
+
+  # Pull requests only: on main, publish-images.yml builds (and pushes) the same images.
+  docker-build:
+    name: Docker build ${{ matrix.image }}
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.images != '[]'
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.changes.outputs.images) }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      # Reads the layer cache written by publish-images.yml; pull requests never write to it
+      - name: Build image (not pushed)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: false
+          tags: sharpquill-${{ matrix.image }}:ci
+          cache-from: type=gha,scope=${{ matrix.image }}
+
+  security-scans:
+    name: Security scans
+    needs: changes
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        if: needs.changes.outputs.backend == 'true'
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        if: needs.changes.outputs.backend == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ hashFiles('src/backend/**/*.csproj') }}
+          restore-keys: nuget-
+
+      - name: Setup Node.js
+        if: needs.changes.outputs.frontend == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26'
+
+      # Gate: fail on Critical NuGet advisories (direct and transitive). Lower severities are printed only.
+      - name: NuGet vulnerabilities
+        if: needs.changes.outputs.backend == 'true'
+        working-directory: src/backend
+        run: |
+          dotnet restore
+          dotnet list package --vulnerable --include-transitive 2>&1 | tee nuget-vulnerable.txt
+          if grep -q "Critical" nuget-vulnerable.txt; then
+            echo "::error::Critical NuGet vulnerabilities found"
+            exit 1
+          fi
+
+      # Gate: fail on Critical advisories in production dependencies. High findings remain in the
+      # Nuxt 3 dependency line (nitropack, vite builder); tighten to `high` once Nuxt 4 is adopted.
+      - name: npm audit (production dependencies)
+        if: needs.changes.outputs.frontend == 'true'
+        env:
+          APPS: ${{ needs.changes.outputs.apps }}
+        run: |
+          for app in $(jq -r '.[]' <<< "$APPS"); do
+            echo "::group::npm audit $app"
+            (cd src/frontend/$app && npm audit --omit=dev || true)
+            (cd src/frontend/$app && npm audit --omit=dev --audit-level=critical > /dev/null)
+            echo "::endgroup::"
+          done
+
+      # Pull requests scan only their own commits; pushes to main scan the full history
+      - name: Secret scan (gitleaks)
+        env:
+          LOG_OPTS: ${{ github.event_name == 'pull_request' && format('--log-opts={0}..{1}', github.event.pull_request.base.sha, github.event.pull_request.head.sha) || '' }}
+        run: |
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 \
+            detect --source /repo --no-banner --redact --verbose $LOG_OPTS

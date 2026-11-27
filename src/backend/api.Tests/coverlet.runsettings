@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat Code Coverage">
+        <Configuration>
+          <Format>opencover,cobertura</Format>
+          <Include>[SharpQuill.Api]*,[application]*,[data]*,[core]*</Include>
+          <Exclude>[SharpQuill.Migrations]*,[Api.Tests]*,[migrations]*</Exclude>
+          <!-- obj/ holds generated code (RegexGenerator.g.cs, ...) that tests cannot meaningfully cover -->
+          <ExcludeByFile>**/Program.cs,**/obj/**</ExcludeByFile>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>
